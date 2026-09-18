@@ -31,23 +31,24 @@ model Hospital {
 // ============================================================
 
 model Role {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String  @id @default(uuid())
+  name        String  @unique
   description String?
 
   users User[]
 }
 
 model User {
-  id         String   @id @default(uuid())
-  name       String
-  email      String   @unique
-  phone      String?
-  password   String
-  hospitalId String
-  roleId     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  phone         String?
+  passwordHash  String   @map("password")
+  hospitalId    String
+  roleId        String
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   hospital Hospital @relation(fields: [hospitalId], references: [id])
   role     Role     @relation(fields: [roleId], references: [id])
@@ -55,8 +56,9 @@ model User {
   doctor  Doctor?
   patient Patient?
 
-  notifications Notification[]
-  auditLogs     AuditLog[]
+  notifications         Notification[]
+  auditLogs              AuditLog[]
+  emailVerificationOtps EmailVerificationOtp[]
 }
 
 // ============================================================
@@ -80,15 +82,15 @@ model Department {
 // ============================================================
 
 model Doctor {
-  id           String    @id @default(uuid())
-  userId       String    @unique
-  departmentId String
-  specialization String?
-  licenseNumber String?   @unique
-  consultationFee Decimal? @db.Decimal(10, 2)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deletedAt    DateTime?
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  departmentId    String
+  specialization  String?
+  licenseNumber   String?   @unique
+  consultationFee Decimal?  @db.Decimal(10, 2)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
 
   user       User       @relation(fields: [userId], references: [id])
   department Department @relation(fields: [departmentId], references: [id])
@@ -103,14 +105,14 @@ model Doctor {
 // ============================================================
 
 model DoctorAvailability {
-  id        String   @id @default(uuid())
-  doctorId  String
-  dayOfWeek Int
-  startTime String
-  endTime   String
-  slotMinutes Int    @default(30)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  doctorId    String
+  dayOfWeek   Int
+  startTime   String
+  endTime     String
+  slotMinutes Int      @default(30)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   doctor Doctor @relation(fields: [doctorId], references: [id])
 
@@ -122,17 +124,17 @@ model DoctorAvailability {
 // ============================================================
 
 model Patient {
-  id            String    @id @default(uuid())
-  userId        String    @unique
-  hospitalId    String
-  dateOfBirth   DateTime?
-  gender        String?
-  bloodGroup    String?
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  hospitalId            String
+  dateOfBirth           DateTime?
+  gender                String?
+  bloodGroup            String?
   emergencyContactName  String?
   emergencyContactPhone String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
 
   user     User     @relation(fields: [userId], references: [id])
   hospital Hospital @relation(fields: [hospitalId], references: [id])
@@ -147,15 +149,15 @@ model Patient {
 // ============================================================
 
 model Room {
-  id          String   @id @default(uuid())
-  hospitalId  String
-  roomNumber  String
-  roomType    String
-  floor       String?
-  capacity    Int      @default(1)
-  status      String   @default("AVAILABLE")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  hospitalId String
+  roomNumber String
+  roomType   String
+  floor      String?
+  capacity   Int      @default(1)
+  status     String   @default("AVAILABLE")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   hospital Hospital @relation(fields: [hospitalId], references: [id])
 
@@ -167,16 +169,16 @@ model Room {
 // ============================================================
 
 model Address {
-  id          String   @id @default(uuid())
-  hospitalId  String?
+  id           String   @id @default(uuid())
+  hospitalId   String?
   addressLine1 String
   addressLine2 String?
-  city        String
-  state       String
-  postalCode  String
-  country     String   @default("India")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  city         String
+  state        String
+  postalCode   String
+  country      String   @default("India")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   hospital Hospital? @relation(fields: [hospitalId], references: [id])
 }
@@ -186,20 +188,20 @@ model Address {
 // ============================================================
 
 model Appointment {
-  id           String   @id @default(uuid())
-  doctorId     String
-  patientId    String
-  departmentId String
+  id              String    @id @default(uuid())
+  doctorId        String
+  patientId       String
+  departmentId    String
   appointmentDate DateTime
-  startTime    DateTime
-  endTime      DateTime
-  status       String   @default("PENDING")
-  type         String   @default("REGULAR")
-  reason       String?
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deletedAt    DateTime?
+  startTime       DateTime
+  endTime         DateTime
+  status          String    @default("PENDING")
+  type            String    @default("REGULAR")
+  reason          String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
 
   doctor     Doctor     @relation(fields: [doctorId], references: [id])
   patient    Patient    @relation(fields: [patientId], references: [id])
@@ -219,28 +221,28 @@ model Appointment {
 // ============================================================
 
 model MedicalRecord {
-  id          String   @id @default(uuid())
-  appointmentId String @unique
-  patientId   String
-  doctorId    String
-  chiefComplaint String?
-  symptoms    String?
-  diagnosis   String?
-  icd10Code   String?
-  treatmentPlan String?
-  allergies   String?
+  id                   String   @id @default(uuid())
+  appointmentId        String   @unique
+  patientId            String
+  doctorId             String
+  chiefComplaint       String?
+  symptoms             String?
+  diagnosis            String?
+  icd10Code            String?
+  treatmentPlan        String?
+  allergies            String?
   adverseDrugReactions String?
-  bloodPressure String?
-  pulse       Int?
-  temperature Decimal? @db.Decimal(5, 2)
-  spo2        Int?
-  height      Decimal? @db.Decimal(5, 2)
-  weight      Decimal? @db.Decimal(5, 2)
-  bmi         Decimal? @db.Decimal(5, 2)
-  familyHistory String?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  bloodPressure        String?
+  pulse                Int?
+  temperature          Decimal? @db.Decimal(5, 2)
+  spo2                 Int?
+  height               Decimal? @db.Decimal(5, 2)
+  weight               Decimal? @db.Decimal(5, 2)
+  bmi                  Decimal? @db.Decimal(5, 2)
+  familyHistory        String?
+  notes                String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   appointment Appointment @relation(fields: [appointmentId], references: [id])
   patient     Patient     @relation(fields: [patientId], references: [id])
@@ -255,14 +257,14 @@ model MedicalRecord {
 // ============================================================
 
 model Prescription {
-  id             String   @id @default(uuid())
-  medicalRecordId String
+  id               String   @id @default(uuid())
+  medicalRecordId  String
   digitalSignature String?
-  issuedAt       DateTime @default(now())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  issuedAt         DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id])
+  medicalRecord MedicalRecord      @relation(fields: [medicalRecordId], references: [id])
   items         PrescriptionItem[]
 }
 
@@ -291,14 +293,14 @@ model Medicine {
 // ============================================================
 
 model PrescriptionItem {
-  id             String   @id @default(uuid())
-  prescriptionId String
-  medicineId     String
-  dosage         String
-  frequency      String
-  durationDays   Int
+  id                  String   @id @default(uuid())
+  prescriptionId      String
+  medicineId          String
+  dosage              String
+  frequency           String
+  durationDays        Int
   specialInstructions String?
-  createdAt      DateTime @default(now())
+  createdAt           DateTime @default(now())
 
   prescription Prescription @relation(fields: [prescriptionId], references: [id])
   medicine     Medicine     @relation(fields: [medicineId], references: [id])
@@ -312,16 +314,16 @@ model PrescriptionItem {
 // ============================================================
 
 model MedicineBatch {
-  id              String   @id @default(uuid())
-  medicineId      String
-  batchNumber     String
+  id                String    @id @default(uuid())
+  medicineId        String
+  batchNumber       String
   manufacturingDate DateTime?
-  expiryDate      DateTime
-  quantity        Int
-  unitCost        Decimal  @db.Decimal(10, 2)
-  mrp             Decimal  @db.Decimal(10, 2)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  expiryDate        DateTime
+  quantity          Int
+  unitCost          Decimal   @db.Decimal(10, 2)
+  mrp               Decimal   @db.Decimal(10, 2)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   medicine Medicine @relation(fields: [medicineId], references: [id])
 
@@ -334,14 +336,14 @@ model MedicineBatch {
 // ============================================================
 
 model LabTest {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  unit        String?
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  unit         String?
   referenceMin Decimal? @db.Decimal(10, 2)
   referenceMax Decimal? @db.Decimal(10, 2)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   labOrders LabOrder[]
 }
@@ -351,18 +353,18 @@ model LabTest {
 // ============================================================
 
 model LabOrder {
-  id             String   @id @default(uuid())
-  medicalRecordId String
-  labTestId      String
-  status         String   @default("ORDERED")
-  result         String?
-  resultValue    Decimal? @db.Decimal(10, 2)
-  reportUrl      String?
-  orderedAt      DateTime @default(now())
+  id                String    @id @default(uuid())
+  medicalRecordId   String
+  labTestId         String
+  status            String    @default("ORDERED")
+  result            String?
+  resultValue       Decimal?  @db.Decimal(10, 2)
+  reportUrl         String?
+  orderedAt         DateTime  @default(now())
   sampleCollectedAt DateTime?
-  reviewedAt     DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  reviewedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id])
   labTest       LabTest       @relation(fields: [labTestId], references: [id])
@@ -376,19 +378,19 @@ model LabOrder {
 // ============================================================
 
 model Invoice {
-  id            String   @id @default(uuid())
-  appointmentId String   @unique
+  id            String    @id @default(uuid())
+  appointmentId String    @unique
   patientId     String
-  invoiceNumber String   @unique
-  subtotal      Decimal  @db.Decimal(10, 2)
-  tax           Decimal  @default(0) @db.Decimal(10, 2)
-  discount      Decimal  @default(0) @db.Decimal(10, 2)
-  total         Decimal  @db.Decimal(10, 2)
-  status        String   @default("DRAFT")
+  invoiceNumber String    @unique
+  subtotal      Decimal   @db.Decimal(10, 2)
+  tax           Decimal   @default(0) @db.Decimal(10, 2)
+  discount      Decimal   @default(0) @db.Decimal(10, 2)
+  total         Decimal   @db.Decimal(10, 2)
+  status        String    @default("DRAFT")
   issuedAt      DateTime?
   paidAt        DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   appointment Appointment   @relation(fields: [appointmentId], references: [id])
   patient     Patient       @relation(fields: [patientId], references: [id])
@@ -419,15 +421,15 @@ model InvoiceItem {
 // ============================================================
 
 model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  type      String
-  title     String
-  message   String
+  id         String   @id @default(uuid())
+  userId     String
+  type       String
+  title      String
+  message    String
   entityType String?
   entityId   String?
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
 
@@ -455,4 +457,36 @@ model AuditLog {
   @@index([userId])
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+// ============================================================
+// PASSWORD RESET
+// ============================================================
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ============================================================
+// EMAIL VERIFICATION OTP
+// ============================================================
+
+model EmailVerificationOtp {
+  id        String   @id @default(uuid())
+  userId    String
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
