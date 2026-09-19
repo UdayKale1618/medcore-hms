@@ -9,8 +9,6 @@ import {
 } from '@nestjs/common';
 
 import type { Request, Response } from 'express';
-import { Roles } from './roles.decorator';
-import { RolesGuard } from './roles.guard';
 
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -134,18 +132,6 @@ export class AuthController {
       user,
     };
   }
-// =========================
-// RBAC TEST
-// =========================
-@Get('rbac-test')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('PATIENT')
-rbacTest(@Req() request: Request) {
-  return {
-    message: 'RBAC is working',
-    user: request.user,
-  };
-}
 
   // =========================
   // LOGOUT
