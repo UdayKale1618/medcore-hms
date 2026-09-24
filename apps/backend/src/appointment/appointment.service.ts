@@ -245,54 +245,61 @@ export class AppointmentService {
       }
     }
 
-    // 8. Normal Conflict Pre-Check (Baseline double-booking prevention)
-    const doctorConflict = await this.prisma.appointment.findFirst({
-      where: {
-        doctorId: doctor.id,
-        deletedAt: null,
-        status: { notIn: [AppointmentStatus.CANCELLED] },
-        startTime: { lt: end },
-        endTime: { gt: start },
-      },
-    });
+    // 8. Transactional Concurrency Protection & Conflict Check
+    return this.prisma.$transaction(async (tx) => {
+      // Acquire database row locks on Doctor and Patient to serialize concurrent bookings
+      await tx.$queryRaw`SELECT id FROM "Doctor" WHERE id = ${doctor.id} FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM "Patient" WHERE id = ${resolvedPatientId} FOR UPDATE`;
 
-    if (doctorConflict) {
-      throw new ConflictException(
-        'Doctor already has an appointment scheduled during this time slot',
-      );
-    }
+      // Re-check conflicting appointments INSIDE the protected transaction
+      const doctorConflict = await tx.appointment.findFirst({
+        where: {
+          doctorId: doctor.id,
+          deletedAt: null,
+          status: { notIn: [AppointmentStatus.CANCELLED] },
+          startTime: { lt: end },
+          endTime: { gt: start },
+        },
+      });
 
-    const patientConflict = await this.prisma.appointment.findFirst({
-      where: {
-        patientId: resolvedPatientId,
-        deletedAt: null,
-        status: { notIn: [AppointmentStatus.CANCELLED] },
-        startTime: { lt: end },
-        endTime: { gt: start },
-      },
-    });
+      if (doctorConflict) {
+        throw new ConflictException(
+          'Doctor already has an appointment scheduled during this time slot',
+        );
+      }
 
-    if (patientConflict) {
-      throw new ConflictException(
-        'Patient already has an appointment scheduled during this time slot',
-      );
-    }
+      const patientConflict = await tx.appointment.findFirst({
+        where: {
+          patientId: resolvedPatientId,
+          deletedAt: null,
+          status: { notIn: [AppointmentStatus.CANCELLED] },
+          startTime: { lt: end },
+          endTime: { gt: start },
+        },
+      });
 
-    // 9. Create Appointment
-    return this.prisma.appointment.create({
-      data: {
-        doctorId: doctor.id,
-        patientId: resolvedPatientId,
-        departmentId: department.id,
-        appointmentDate,
-        startTime: start,
-        endTime: end,
-        status: AppointmentStatus.PENDING,
-        type,
-        reason: dto.reason,
-        notes: dto.notes,
-      },
-      include: APPOINTMENT_INCLUDE,
+      if (patientConflict) {
+        throw new ConflictException(
+          'Patient already has an appointment scheduled during this time slot',
+        );
+      }
+
+      // 9. Create Appointment atomically inside transaction
+      return tx.appointment.create({
+        data: {
+          doctorId: doctor.id,
+          patientId: resolvedPatientId,
+          departmentId: department.id,
+          appointmentDate,
+          startTime: start,
+          endTime: end,
+          status: AppointmentStatus.PENDING,
+          type,
+          reason: dto.reason,
+          notes: dto.notes,
+        },
+        include: APPOINTMENT_INCLUDE,
+      });
     });
   }
 
@@ -581,40 +588,60 @@ export class AppointmentService {
         }
       }
 
-      // 2. Conflict checks
-      const doctorConflict = await this.prisma.appointment.findFirst({
-        where: {
-          id: { not: id },
-          doctorId,
-          deletedAt: null,
-          status: { notIn: [AppointmentStatus.CANCELLED] },
-          startTime: { lt: newEnd },
-          endTime: { gt: newStart },
-        },
+      // 2. Transactional Concurrency Protection & Conflict checks
+      return this.prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM "Doctor" WHERE id = ${doctorId} FOR UPDATE`;
+        await tx.$queryRaw`SELECT id FROM "Patient" WHERE id = ${appointment.patientId} FOR UPDATE`;
+
+        const doctorConflict = await tx.appointment.findFirst({
+          where: {
+            id: { not: id },
+            doctorId,
+            deletedAt: null,
+            status: { notIn: [AppointmentStatus.CANCELLED] },
+            startTime: { lt: newEnd },
+            endTime: { gt: newStart },
+          },
+        });
+
+        if (doctorConflict) {
+          throw new ConflictException(
+            'Doctor already has an appointment scheduled during this time slot',
+          );
+        }
+
+        const patientConflict = await tx.appointment.findFirst({
+          where: {
+            id: { not: id },
+            patientId: appointment.patientId,
+            deletedAt: null,
+            status: { notIn: [AppointmentStatus.CANCELLED] },
+            startTime: { lt: newEnd },
+            endTime: { gt: newStart },
+          },
+        });
+
+        if (patientConflict) {
+          throw new ConflictException(
+            'Patient already has an appointment scheduled during this time slot',
+          );
+        }
+
+        return tx.appointment.update({
+          where: { id },
+          data: {
+            ...(dto.doctorId && { doctorId: dto.doctorId }),
+            ...(dto.departmentId && { departmentId: dto.departmentId }),
+            ...(dto.appointmentDate && { appointmentDate: newDate }),
+            ...(dto.startTime && { startTime: newStart }),
+            ...(dto.endTime && { endTime: newEnd }),
+            ...(dto.type && { type: dto.type }),
+            ...(dto.reason !== undefined && { reason: dto.reason }),
+            ...(dto.notes !== undefined && { notes: dto.notes }),
+          },
+          include: APPOINTMENT_INCLUDE,
+        });
       });
-
-      if (doctorConflict) {
-        throw new ConflictException(
-          'Doctor already has an appointment scheduled during this time slot',
-        );
-      }
-
-      const patientConflict = await this.prisma.appointment.findFirst({
-        where: {
-          id: { not: id },
-          patientId: appointment.patientId,
-          deletedAt: null,
-          status: { notIn: [AppointmentStatus.CANCELLED] },
-          startTime: { lt: newEnd },
-          endTime: { gt: newStart },
-        },
-      });
-
-      if (patientConflict) {
-        throw new ConflictException(
-          'Patient already has an appointment scheduled during this time slot',
-        );
-      }
     }
 
     return this.prisma.appointment.update({

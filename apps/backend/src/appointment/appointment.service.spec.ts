@@ -33,6 +33,8 @@ describe('AppointmentService', () => {
       create: jest.Mock;
       update: jest.Mock;
     };
+    $transaction: jest.Mock;
+    $queryRaw: jest.Mock;
   };
 
   const adminCaller: AuthUser = {
@@ -181,6 +183,8 @@ describe('AppointmentService', () => {
         create: jest.fn(),
         update: jest.fn(),
       },
+      $transaction: jest.fn().mockImplementation(async (cb) => cb(prisma)),
+      $queryRaw: jest.fn().mockResolvedValue([{ id: 'mock-id' }]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
