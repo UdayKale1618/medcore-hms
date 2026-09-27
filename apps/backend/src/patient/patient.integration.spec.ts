@@ -33,7 +33,6 @@ describe('PatientModule Integration & RBAC Tests', () => {
   const validUserId = 'c28a8d0e-255e-4c5e-855c-097587ef75dc';
   const validPatientId = 'd39c8d0e-5678-4c5e-855c-097587ef75de';
   const hospitalAId = 'hosp-aaa-111';
-  const hospitalBId = 'hosp-bbb-222';
 
   const mockSafePatient = {
     id: validPatientId,

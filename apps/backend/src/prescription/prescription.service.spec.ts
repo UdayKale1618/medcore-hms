@@ -64,14 +64,6 @@ describe('PrescriptionService', () => {
     hospitalId: 'hosp-1',
   };
 
-  const superAdminCaller: AuthUser = {
-    userId: 'user-super-1',
-    email: 'super@medcore.com',
-    roleId: 'role-super',
-    role: 'SUPER_ADMIN',
-    hospitalId: 'hosp-super',
-  };
-
   const otherHospitalCaller: AuthUser = {
     userId: 'user-doc-other',
     email: 'other@fortis.com',

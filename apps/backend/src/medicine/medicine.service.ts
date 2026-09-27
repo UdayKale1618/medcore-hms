@@ -229,7 +229,7 @@ export class MedicineService {
     dto: CreateMedicineBatchDto,
     caller: AuthUser,
   ) {
-    const medicine = await this.getMedicineById(medicineId, caller);
+    await this.getMedicineById(medicineId, caller);
 
     if (
       caller.role !== 'HOSPITAL_ADMIN' &&

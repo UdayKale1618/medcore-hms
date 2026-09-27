@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MedicineService } from './medicine.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  BadRequestException,
   ConflictException,
   ForbiddenException,
   NotFoundException,

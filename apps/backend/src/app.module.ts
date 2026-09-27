@@ -14,6 +14,8 @@ import { AppointmentModule } from './appointment/appointment.module';
 import { MedicalRecordModule } from './medical-record/medical-record.module';
 import { MedicineModule } from './medicine/medicine.module';
 import { PrescriptionModule } from './prescription/prescription.module';
+import { LabModule } from './lab/lab.module';
+import { InvoiceModule } from './invoice/invoice.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { PrescriptionModule } from './prescription/prescription.module';
     MedicalRecordModule,
     MedicineModule,
     PrescriptionModule,
+    LabModule,
+    InvoiceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

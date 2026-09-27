@@ -3,7 +3,6 @@ import {
   BadRequestException,
   ForbiddenException,
   INestApplication,
-  NotFoundException,
   ValidationPipe,
 } from '@nestjs/common';
 import request from 'supertest';

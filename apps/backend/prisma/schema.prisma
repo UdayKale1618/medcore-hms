@@ -24,6 +24,7 @@ model Hospital {
   patients    Patient[]
   addresses   Address[]
   medicines   Medicine[]
+  labTests    LabTest[]
 }
 
 // ============================================================
@@ -336,16 +337,20 @@ model MedicineBatch {
 // ============================================================
 
 model LabTest {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
+  hospitalId   String?
   name         String
   description  String?
   unit         String?
-  referenceMin Decimal? @db.Decimal(10, 2)
-  referenceMax Decimal? @db.Decimal(10, 2)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  referenceMin Decimal?  @db.Decimal(10, 2)
+  referenceMax Decimal?  @db.Decimal(10, 2)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
+  hospital  Hospital?  @relation(fields: [hospitalId], references: [id])
   labOrders LabOrder[]
+
+  @@index([hospitalId])
 }
 
 // ============================================================
@@ -379,7 +384,7 @@ model LabOrder {
 
 model Invoice {
   id            String    @id @default(uuid())
-  appointmentId String    @unique
+  appointmentId String?   @unique
   patientId     String
   invoiceNumber String    @unique
   subtotal      Decimal   @db.Decimal(10, 2)
@@ -392,7 +397,7 @@ model Invoice {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  appointment Appointment   @relation(fields: [appointmentId], references: [id])
+  appointment Appointment?  @relation(fields: [appointmentId], references: [id])
   patient     Patient       @relation(fields: [patientId], references: [id])
   items       InvoiceItem[]
 }
