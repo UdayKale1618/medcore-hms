@@ -4,8 +4,10 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationService } from '../notification/notification.service';
 import {
   AppointmentType,
   CreateAppointmentDto,
@@ -85,7 +87,10 @@ function extractTimeAndDay(
 
 @Injectable()
 export class AppointmentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly notificationService?: NotificationService,
+  ) {}
 
   // =========================================================
   // CREATE APPOINTMENT
@@ -747,11 +752,32 @@ export class AppointmentService {
       );
     }
 
-    return this.prisma.appointment.update({
+    const updated = await this.prisma.appointment.update({
       where: { id },
       data: { status: targetStatus },
       include: APPOINTMENT_INCLUDE,
     });
+
+    if (this.notificationService && updated.patient?.user?.id) {
+      const eventType =
+        targetStatus === AppointmentStatus.CONFIRMED
+          ? 'appointment.confirmed'
+          : targetStatus === AppointmentStatus.CANCELLED
+            ? 'appointment.cancelled'
+            : 'appointment.updated';
+
+      await this.notificationService.dispatch({
+        userId: updated.patient.user.id,
+        hospitalId: updated.patient.hospitalId,
+        type: eventType,
+        title: `Appointment ${targetStatus}`,
+        message: `Your appointment with Dr. ${updated.doctor.user.name} on ${updated.appointmentDate.toISOString().slice(0, 10)} is ${targetStatus.toLowerCase()}.`,
+        entityType: 'Appointment',
+        entityId: id,
+      });
+    }
+
+    return updated;
   }
 
   // =========================================================

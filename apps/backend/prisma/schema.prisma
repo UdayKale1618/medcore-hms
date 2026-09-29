@@ -25,6 +25,7 @@ model Hospital {
   addresses   Address[]
   medicines   Medicine[]
   labTests    LabTest[]
+  payments    Payment[]
 }
 
 // ============================================================
@@ -260,6 +261,7 @@ model MedicalRecord {
 model Prescription {
   id               String   @id @default(uuid())
   medicalRecordId  String
+  status           String   @default("PRESCRIBED")
   digitalSignature String?
   issuedAt         DateTime @default(now())
   createdAt        DateTime @default(now())
@@ -267,6 +269,8 @@ model Prescription {
 
   medicalRecord MedicalRecord      @relation(fields: [medicalRecordId], references: [id])
   items         PrescriptionItem[]
+
+  @@index([status])
 }
 
 // ============================================================
@@ -280,6 +284,7 @@ model Medicine {
   form         String
   description  String?
   reorderLevel Int      @default(10)
+  isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -287,6 +292,9 @@ model Medicine {
 
   prescriptionItems PrescriptionItem[]
   batches           MedicineBatch[]
+
+  @@index([hospitalId])
+  @@index([isActive])
 }
 
 // ============================================================
@@ -300,6 +308,7 @@ model PrescriptionItem {
   dosage              String
   frequency           String
   durationDays        Int
+  dispensedQuantity   Int      @default(0)
   specialInstructions String?
   createdAt           DateTime @default(now())
 
@@ -400,6 +409,7 @@ model Invoice {
   appointment Appointment?  @relation(fields: [appointmentId], references: [id])
   patient     Patient       @relation(fields: [patientId], references: [id])
   items       InvoiceItem[]
+  payments    Payment[]
 }
 
 // ============================================================
@@ -419,6 +429,34 @@ model InvoiceItem {
   invoice Invoice @relation(fields: [invoiceId], references: [id])
 
   @@index([invoiceId])
+}
+
+// ============================================================
+// PAYMENTS (Razorpay & Multi-Tenant Gateway Integration)
+// ============================================================
+
+model Payment {
+  id               String    @id @default(uuid())
+  invoiceId        String
+  hospitalId       String
+  gateway          String    @default("RAZORPAY")
+  gatewayOrderId   String?
+  gatewayPaymentId String?
+  amount           Decimal   @db.Decimal(10, 2)
+  currency         String    @default("INR")
+  status           String    @default("CREATED")
+  method           String?
+  failureReason    String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  invoice  Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  hospital Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([hospitalId])
+  @@index([gatewayOrderId])
+  @@index([gatewayPaymentId])
 }
 
 // ============================================================

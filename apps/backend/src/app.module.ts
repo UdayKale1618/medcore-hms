@@ -16,6 +16,10 @@ import { MedicineModule } from './medicine/medicine.module';
 import { PrescriptionModule } from './prescription/prescription.module';
 import { LabModule } from './lab/lab.module';
 import { InvoiceModule } from './invoice/invoice.module';
+import { PharmacyModule } from './pharmacy/pharmacy.module';
+import { PaymentModule } from './payment/payment.module';
+import { NotificationModule } from './notification/notification.module';
+import { PatientPortalModule } from './patient-portal/patient-portal.module';
 
 @Module({
   imports: [
@@ -33,6 +37,10 @@ import { InvoiceModule } from './invoice/invoice.module';
     PrescriptionModule,
     LabModule,
     InvoiceModule,
+    PharmacyModule,
+    PaymentModule,
+    NotificationModule,
+    PatientPortalModule,
   ],
   controllers: [AppController],
   providers: [AppService],
