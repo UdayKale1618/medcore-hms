@@ -118,7 +118,7 @@ export default function SettingsPage() {
             <CardContent className="p-4 text-xs space-y-2">
               <div className="flex justify-between">
                 <span className="text-slate-500">API Gateway:</span>
-                <span className="font-semibold text-emerald-700">Online (:5000)</span>
+                <span className="font-semibold text-emerald-700">Online</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Socket.IO:</span>

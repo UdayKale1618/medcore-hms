@@ -254,7 +254,7 @@ export default function BillingPage() {
 
       // 3. Configure Razorpay Checkout options
       const options: RazorpayOptions = {
-        key: orderRes.keyId || 'rzp_test_placeholder',
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || orderRes.keyId || 'rzp_test_placeholder',
         amount: orderRes.amountInPaise,
         currency: orderRes.currency || 'INR',
         name: 'MedCore Hospital Healthcare',

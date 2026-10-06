@@ -72,6 +72,36 @@ export class AuthController {
 
   // =========================
   // LOGIN
+  private getRefreshTokenCookieOptions() {
+    const isProduction = process.env.NODE_ENV === 'production';
+    // For cross-site deployments (e.g. Frontend on Vercel, Backend on AWS EC2/Render),
+    // SameSite must be 'none' and Secure must be true for the browser to send cross-origin cookies.
+    // If frontend and backend share the same site or subdomains, COOKIE_SAME_SITE can be set to 'lax' or 'strict'.
+    const sameSite: 'none' | 'lax' | 'strict' =
+      (process.env.COOKIE_SAME_SITE as 'none' | 'lax' | 'strict') ||
+      (isProduction ? 'none' : 'lax');
+
+    const secure = isProduction ? true : process.env.COOKIE_SECURE === 'true';
+
+    return {
+      httpOnly: true,
+      secure,
+      sameSite,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+  }
+
+  private getClearCookieOptions() {
+    const { httpOnly, secure, sameSite } = this.getRefreshTokenCookieOptions();
+    return {
+      httpOnly,
+      secure,
+      sameSite,
+    };
+  }
+
+  // =========================
+  // LOGIN
   // =========================
   @Post('login')
   async login(
@@ -80,12 +110,11 @@ export class AuthController {
   ) {
     const result = await this.authService.login(loginDto);
 
-    response.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    response.cookie(
+      'refreshToken',
+      result.refreshToken,
+      this.getRefreshTokenCookieOptions(),
+    );
 
     return {
       message: result.message,
@@ -106,12 +135,11 @@ export class AuthController {
 
     const result = await this.authService.refresh(refreshToken);
 
-    response.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    response.cookie(
+      'refreshToken',
+      result.refreshToken,
+      this.getRefreshTokenCookieOptions(),
+    );
 
     return {
       message: 'Token refreshed successfully',
@@ -146,11 +174,7 @@ export class AuthController {
 
     await this.authService.logout(user.userId);
 
-    response.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-    });
+    response.clearCookie('refreshToken', this.getClearCookieOptions());
 
     return {
       message: 'Logout successful',
