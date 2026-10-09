@@ -22,7 +22,7 @@ import type { AuthUser } from './auth-user.interface';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   // =========================
   // REGISTER
@@ -70,11 +70,9 @@ export class AuthController {
     );
   }
 
-  // =========================
-  // LOGIN
   private getRefreshTokenCookieOptions() {
     const isProduction = process.env.NODE_ENV === 'production';
-    // For cross-site deployments (e.g. Frontend on Vercel, Backend on AWS EC2/Render),
+    // For cross-site deployments (e.g. Frontend on Vercel, Backend on Render/AWS),
     // SameSite must be 'none' and Secure must be true for the browser to send cross-origin cookies.
     // If frontend and backend share the same site or subdomains, COOKIE_SAME_SITE can be set to 'lax' or 'strict'.
     const sameSite: 'none' | 'lax' | 'strict' =

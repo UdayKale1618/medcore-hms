@@ -8,35 +8,19 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
-const getSocketCorsOrigins = () => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const configuredOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(',').map((o) => o.trim()).filter(Boolean)
-    : [];
-
-  if (configuredOrigins.length > 0) {
-    return isProduction
-      ? configuredOrigins
-      : [...configuredOrigins, 'http://localhost:3000', 'http://127.0.0.1:3000'];
-  }
-  return ['http://localhost:3000', 'http://127.0.0.1:3000'];
-};
-
 @WebSocketGateway({
   cors: {
-    origin: getSocketCorsOrigins(),
-    credentials: true,
+    origin: '*',
   },
 })
 export class NotificationGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   private readonly logger = new Logger(NotificationGateway.name);
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(private readonly jwtService: JwtService) { }
 
   async handleConnection(client: Socket) {
     try {

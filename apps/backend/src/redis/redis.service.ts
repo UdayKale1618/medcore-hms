@@ -8,13 +8,21 @@ export class RedisService implements OnModuleDestroy {
   private isConnected = false;
 
   constructor() {
-    this.redis = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: Number(process.env.REDIS_PORT || 6379),
+    const redisOptions = {
       lazyConnect: true,
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
-    });
+    };
+
+    if (process.env.REDIS_URL) {
+      this.redis = new Redis(process.env.REDIS_URL, redisOptions);
+    } else {
+      this.redis = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: Number(process.env.REDIS_PORT || 6379),
+        ...redisOptions,
+      });
+    }
 
     this.redis.connect()
       .then(() => {
