@@ -10,7 +10,6 @@ import {
   ArrowRight,
   ShieldCheck,
   AlertCircle,
-  Building,
   Activity,
   Stethoscope,
   CheckCircle2,
@@ -52,92 +51,115 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F6F8FC] flex flex-col lg:flex-row">
       {/* ============================================================ */}
-      {/* LEFT COLUMN: Premium Healthcare Branding Panel (Desktop ~48%) */}
+      {/* LEFT COLUMN: Premium Navy Healthcare Branding Panel (~48%)   */}
       {/* ============================================================ */}
-      <div className="hidden lg:flex lg:w-[48%] relative flex-col justify-between p-10 xl:p-14 overflow-hidden bg-gradient-to-br from-[#1D4ED8] via-[#2563EB] to-[#0D9488] text-white">
-        {/* Subtle Decorative Healthcare Background Shapes & Line Art */}
+      <div
+        className="hidden lg:flex lg:w-[48%] relative flex-col justify-between p-10 xl:p-14 overflow-hidden text-white"
+        style={{ background: 'linear-gradient(160deg, #0B1535 0%, #101D40 45%, #16264A 100%)' }}
+      >
+        {/* ── Decorative background layer (non-interactive) ── */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-          {/* Subtle medical grid dots */}
+
+          {/* Extremely subtle dotted grid */}
           <div
-            className="absolute inset-0 opacity-10"
+            className="absolute inset-0 opacity-[0.06]"
             style={{
-              backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
-              backgroundSize: '24px 24px',
+              backgroundImage: 'radial-gradient(circle, #60A5FA 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
             }}
           />
 
-          {/* Soft ambient blur spheres */}
-          <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#60A5FA]/20 blur-3xl" />
-          <div className="absolute top-1/2 -right-24 w-80 h-80 rounded-full bg-[#2DD4BF]/20 blur-3xl" />
-          <div className="absolute -bottom-24 left-1/3 w-96 h-96 rounded-full bg-[#1D4ED8]/30 blur-3xl" />
+          {/* Soft radial navy/blue lighting — top-left */}
+          <div className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full bg-[#60A5FA]/10 blur-3xl" />
+          {/* Faint teal glow — right-mid */}
+          <div className="absolute top-[40%] -right-28 w-[360px] h-[360px] rounded-full bg-[#2DD4BF]/8 blur-3xl" />
+          {/* Deep navy shadow — bottom */}
+          <div className="absolute -bottom-28 left-1/4 w-[420px] h-[420px] rounded-full bg-[#263D67]/40 blur-3xl" />
 
-          {/* Subtle Medical Line Art SVG */}
+          {/* SVG Medical Line Art */}
           <svg
-            className="absolute inset-0 w-full h-full opacity-15"
+            className="absolute inset-0 w-full h-full"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 600 800"
             fill="none"
           >
-            {/* Concentric healthcare connectivity circles */}
-            <circle cx="480" cy="240" r="180" stroke="white" strokeWidth="1.5" strokeDasharray="6 6" />
-            <circle cx="480" cy="240" r="120" stroke="white" strokeWidth="1.5" />
-            <circle cx="480" cy="240" r="60" stroke="#5EEAD4" strokeWidth="1.5" />
+            {/* Large concentric dashed rings — behind headline area */}
+            <circle cx="490" cy="220" r="200" stroke="#60A5FA" strokeWidth="0.8" strokeDasharray="5 8" opacity="0.12" />
+            <circle cx="490" cy="220" r="140" stroke="#60A5FA" strokeWidth="0.8" opacity="0.10" />
+            <circle cx="490" cy="220" r="80"  stroke="#2DD4BF" strokeWidth="0.8" opacity="0.13" />
 
-            {/* Medical Plus / Cross watermark */}
+            {/* Medical cross watermark — lower left */}
             <path
-              d="M120 480 H180 V420 H220 V480 H280 V520 H220 V580 H180 V520 H120 Z"
-              stroke="white"
-              strokeWidth="1.5"
-              strokeDasharray="4 4"
+              d="M90 490 H148 V432 H190 V490 H248 V532 H190 V590 H148 V532 H90 Z"
+              stroke="#60A5FA"
+              strokeWidth="0.9"
+              strokeDasharray="4 6"
+              opacity="0.08"
             />
 
-            {/* Continuous Pulse / EKG Wave across the panel */}
+            {/* EKG / heartbeat line — bottom strip */}
             <path
-              d="M0 640 H160 L180 610 L200 680 L230 580 L250 670 L270 630 L290 640 H600"
-              stroke="white"
-              strokeWidth="2.5"
+              d="M0 660 H155 L175 628 L196 696 L225 592 L246 682 L266 644 L284 660 H600"
+              stroke="#60A5FA"
+              strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
+              opacity="0.22"
             />
           </svg>
         </div>
 
-        {/* Top Brand Header */}
+        {/* ── Top Brand Header ── */}
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xs">
-              <HeartPulse className="w-6 h-6 text-white" />
+            <div
+              className="inline-flex items-center justify-center w-11 h-11 rounded-xl border border-[#60A5FA]/20 shadow-sm"
+              style={{ background: 'rgba(96,165,250,0.08)' }}
+            >
+              <HeartPulse className="w-6 h-6 text-[#60A5FA]" />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold tracking-tight text-white">
-                MedCore
-              </span>
-              <span className="text-[11px] uppercase tracking-wider font-extrabold text-[#CCFBF1] bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20">
+              <span className="text-2xl font-bold tracking-tight text-white">MedCore</span>
+              <span
+                className="text-[11px] uppercase tracking-wider font-extrabold text-[#2DD4BF] px-2.5 py-0.5 rounded-full border border-[#2DD4BF]/30"
+                style={{ background: 'rgba(45,212,191,0.08)' }}
+              >
                 HMS
               </span>
             </div>
           </div>
         </div>
 
-        {/* Center Hero & Tagline */}
+        {/* ── Center Hero & Tagline ── */}
         <div className="relative z-10 my-auto py-10 max-w-lg">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-xs text-xs font-medium text-[#CCFBF1] mb-6">
-            <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse" />
+
+          {/* Outlined enterprise badge */}
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-medium mb-6"
+            style={{
+              borderColor: 'rgba(96,165,250,0.25)',
+              background: 'rgba(96,165,250,0.07)',
+              color: '#D5DEEF',
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2DD4BF] animate-pulse" />
             <span>Enterprise Hospital Information System</span>
           </div>
 
+          {/* Main headline */}
           <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight text-white leading-tight">
             Connected Care.
-            <span className="block text-[#99F6E4]">Smarter Hospitals.</span>
+            <span className="block" style={{ color: '#2DD4BF' }}>Smarter Hospitals.</span>
           </h2>
 
-          <p className="mt-4 text-sm xl:text-base text-blue-100/90 leading-relaxed font-normal">
+          {/* Supporting description */}
+          <p className="mt-4 text-sm xl:text-[15px] leading-relaxed font-normal" style={{ color: '#D5DEEF' }}>
             A comprehensive, multi-tenant clinical suite orchestrating inpatient management,
             real-time diagnostics, electronic prescriptions, and synchronized healthcare operations.
           </p>
 
           {/* Three Clinical Pillars */}
-          <div className="mt-8 space-y-3">
+          <div className="mt-8 space-y-2.5">
             {[
               {
                 icon: Activity,
@@ -157,31 +179,37 @@ export default function LoginPage() {
             ].map((feature) => (
               <div
                 key={feature.title}
-                className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xs transition-colors hover:bg-white/10"
+                className="flex items-start gap-3 p-3 rounded-xl transition-colors"
+                style={{
+                  background: 'rgba(22,38,74,0.60)',
+                  border: '1px solid rgba(96,165,250,0.12)',
+                }}
               >
-                <div className="p-2 rounded-lg bg-white/10 text-[#5EEAD4] shrink-0 mt-0.5">
-                  <feature.icon className="w-4 h-4" />
+                <div
+                  className="p-2 rounded-lg shrink-0 mt-0.5"
+                  style={{ background: 'rgba(96,165,250,0.10)' }}
+                >
+                  <feature.icon className="w-4 h-4" style={{ color: '#2DD4BF' }} />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-white">
-                    {feature.title}
-                  </h3>
-                  <p className="text-[11px] text-blue-100/80 mt-0.5">
-                    {feature.desc}
-                  </p>
+                  <h3 className="text-xs font-semibold text-white">{feature.title}</h3>
+                  <p className="text-[11px] mt-0.5" style={{ color: '#8FAAC8' }}>{feature.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Left Bottom Footer */}
-        <div className="relative z-10 pt-6 border-t border-white/15 flex items-center justify-between text-xs text-blue-100/80">
+        {/* ── Left Bottom Footer ── */}
+        <div
+          className="relative z-10 pt-5 flex items-center justify-between text-xs"
+          style={{ borderTop: '1px solid rgba(96,165,250,0.12)', color: '#8FAAC8' }}
+        >
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#5EEAD4]" />
+            <CheckCircle2 className="w-4 h-4" style={{ color: '#2DD4BF' }} />
             <span>99.99% Clinical Uptime Guaranteed</span>
           </div>
-          <span className="text-[11px] text-blue-200/70">v2.4 Production</span>
+          <span className="text-[11px]" style={{ color: '#4A6080' }}>v2.4 Production</span>
         </div>
       </div>
 
@@ -279,42 +307,6 @@ export default function LoginPage() {
                 </Button>
               </div>
             </form>
-
-            {/* Quick Demo Access Bar */}
-            <div className="mt-6 pt-5 border-t border-[#EEF2F6]">
-              <div className="flex items-center justify-between mb-2.5">
-                <p className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
-                  <Building className="w-3.5 h-3.5 text-[#94A3B8]" /> Quick Demo Accounts
-                </p>
-                <span className="text-[10px] text-[#94A3B8]">Click to autofill</span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-                {[
-                  { role: 'Super Admin', email: 'superadmin@medcore.com' },
-                  { role: 'Hospital Admin', email: 'admin@apollo.com' },
-                  { role: 'Doctor', email: 'doctor@apollo.com' },
-                  { role: 'Nurse', email: 'nurse@apollo.com' },
-                  { role: 'Receptionist', email: 'receptionist@apollo.com' },
-                  { role: 'Lab Tech', email: 'lab@apollo.com' },
-                  { role: 'Pharmacist', email: 'pharmacy@apollo.com' },
-                  { role: 'Accountant', email: 'accountant@apollo.com' },
-                  { role: 'Patient', email: 'patient@apollo.com' },
-                ].map((acc) => (
-                  <button
-                    key={acc.role}
-                    type="button"
-                    onClick={() => {
-                      setEmail(acc.email);
-                      setPassword('Password123!');
-                    }}
-                    className="p-1.5 text-left rounded-xl border border-[#EEF2F6] hover:border-[#2563EB]/40 hover:bg-[#EFF6FF]/50 transition-colors focus:outline-none focus:ring-1 focus:ring-[#2563EB]/30 cursor-pointer"
-                  >
-                    <span className="font-bold text-[#111827] block truncate">{acc.role}</span>
-                    <span className="text-[#94A3B8] text-[10px] truncate block">{acc.email.split('@')[0]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Security Compliance Footer */}
