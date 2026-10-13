@@ -2,10 +2,15 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHospitalDto } from './dto/create-hospital.dto';
 import { UpdateHospitalDto } from './dto/update-hospital.dto';
+import { CreateStaffDto } from './dto/create-staff.dto';
+import type { AuthUser } from '../auth/auth-user.interface';
 
 @Injectable()
 export class HospitalService {
@@ -221,6 +226,167 @@ export class HospitalService {
       },
       orderBy: {
         name: 'asc',
+      },
+    });
+  }
+
+  // =========================================================
+  // PROVISION HOSPITAL STAFF (PRD: Staff Onboarding by Admin)
+  // =========================================================
+  async createStaff(hospitalId: string, dto: CreateStaffDto, caller: AuthUser) {
+    // 1. Enforce tenant isolation: HOSPITAL_ADMIN can only provision for their own hospital
+    if (caller.role !== 'SUPER_ADMIN' && caller.hospitalId !== hospitalId) {
+      throw new ForbiddenException(
+        'Access denied: You can only provision staff for your own hospital',
+      );
+    }
+
+    // 2. Prevent role escalation: HOSPITAL_ADMIN cannot provision another HOSPITAL_ADMIN
+    if (caller.role !== 'SUPER_ADMIN' && dto.role === 'HOSPITAL_ADMIN') {
+      throw new ForbiddenException(
+        'Access denied: Only SUPER_ADMIN can provision hospital administrators',
+      );
+    }
+
+    // 3. Verify target hospital exists
+    const hospital = await this.prisma.hospital.findUnique({
+      where: { id: hospitalId },
+    });
+    if (!hospital) {
+      throw new NotFoundException('Hospital not found');
+    }
+
+    // 4. Verify email uniqueness
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (existingUser) {
+      throw new ConflictException('Email is already registered');
+    }
+
+    // 5. Look up specified staff role
+    const role = await this.prisma.role.findUnique({
+      where: { name: dto.role },
+    });
+    if (!role) {
+      throw new NotFoundException(`Role ${dto.role} not found in system`);
+    }
+
+    // 6. Validate department belongs to this hospital if DOCTOR
+    if (dto.role === 'DOCTOR' && dto.departmentId) {
+      const department = await this.prisma.department.findFirst({
+        where: { id: dto.departmentId, hospitalId },
+      });
+      if (!department) {
+        throw new BadRequestException(
+          'Department does not belong to this hospital',
+        );
+      }
+    }
+
+    // 7. Hash password with bcrypt cost factor 12
+    const passwordHash = await bcrypt.hash(dto.password, 12);
+
+    // 8. Create user record
+    const user = await this.prisma.user.create({
+      data: {
+        name: dto.name,
+        email: dto.email,
+        phone: dto.phone,
+        passwordHash,
+        hospitalId,
+        roleId: role.id,
+        emailVerified: true, // admin-provisioned account
+      },
+      include: {
+        role: true,
+        hospital: true,
+      },
+    });
+
+    // 9. If DOCTOR and department provided, create Doctor entity
+    let doctorRecord = null;
+    if (dto.role === 'DOCTOR' && dto.departmentId) {
+      doctorRecord = await this.prisma.doctor.create({
+        data: {
+          userId: user.id,
+          departmentId: dto.departmentId,
+          specialization: dto.specialization,
+          licenseNumber: dto.licenseNumber,
+          consultationFee: dto.consultationFee,
+        },
+        include: {
+          department: {
+            select: { id: true, name: true },
+          },
+        },
+      });
+    }
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role.name,
+      hospitalId: user.hospitalId,
+      hospitalName: user.hospital.name,
+      emailVerified: user.emailVerified,
+      createdAt: user.createdAt,
+      doctor: doctorRecord,
+    };
+  }
+
+  // =========================================================
+  // GET HOSPITAL STAFF (PRD: List Staff Scoped to Tenant)
+  // =========================================================
+  async getHospitalStaff(hospitalId: string, caller: AuthUser) {
+    if (caller.role !== 'SUPER_ADMIN' && caller.hospitalId !== hospitalId) {
+      throw new ForbiddenException(
+        'Access denied: You can only view staff for your own hospital',
+      );
+    }
+
+    return this.prisma.user.findMany({
+      where: {
+        hospitalId,
+        role: {
+          name: { not: 'PATIENT' },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        roleId: true,
+        emailVerified: true,
+        createdAt: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+        doctor: {
+          select: {
+            id: true,
+            departmentId: true,
+            specialization: true,
+            licenseNumber: true,
+            consultationFee: true,
+            department: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   }

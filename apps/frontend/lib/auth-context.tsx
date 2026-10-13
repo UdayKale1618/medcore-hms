@@ -39,8 +39,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const PUBLIC_ROUTES = [
   '/login',
+  '/register',
   '/forgot-password',
   '/verify-otp',
+  '/verify-email',
   '/reset-password',
 ];
 

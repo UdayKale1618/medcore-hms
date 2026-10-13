@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -22,7 +22,26 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const v = params.get('verified');
+      const r = params.get('registered');
+      if (v === '1' || r === '1') {
+        const timer = setTimeout(() => {
+          if (v === '1') {
+            setSuccessMessage('Email verified successfully! You can now sign in to your portal.');
+          } else if (r === '1') {
+            setSuccessMessage('Registration successful! Please check your email for the verification code.');
+          }
+        }, 0);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
 
   const { login } = useAuth();
   const router = useRouter();
@@ -238,14 +257,51 @@ export default function LoginPage() {
 
           {/* Form Card */}
           <div className="bg-white py-7 sm:py-8 px-6 sm:px-9 shadow-[0_4px_24px_rgba(15,23,42,0.05)] border border-[#EEF2F6] rounded-2xl">
-            <div className="mb-6">
+            <div className="mb-5">
               <h2 className="text-xl sm:text-2xl font-bold text-[#111827] tracking-tight">
-                Staff &amp; Patient Portal
+                Hospital Management Portal
               </h2>
               <p className="mt-1 text-xs sm:text-sm text-[#64748B]">
-                Sign in with your verified clinical or patient credentials to continue.
+                Secure access for every role in your hospital ecosystem.
               </p>
+
+              {/* Supported role chips — informational only, no autofill */}
+              <div className="mt-4 pt-4 border-t border-[#EEF2F6]">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#94A3B8] mb-2.5">
+                  Supported roles
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Super Admin',
+                    'Hospital Admin',
+                    'Doctor',
+                    'Nurse',
+                    'Receptionist',
+                    'Lab Technician',
+                    'Pharmacist',
+                    'Accountant',
+                    'Patient',
+                  ].map((role) => (
+                    <span
+                      key={role}
+                      className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium text-[#374151] bg-[#F1F5F9] border border-[#E2E8F0]"
+                    >
+                      {role}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {successMessage && (
+              <div
+                className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-start gap-2.5 animate-in fade-in duration-150"
+                role="status"
+              >
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+                <span>{successMessage}</span>
+              </div>
+            )}
 
             {error && (
               <div
@@ -305,6 +361,16 @@ export default function LoginPage() {
                 >
                   Sign In to MedCore
                 </Button>
+              </div>
+
+              <div className="pt-3 text-center text-xs text-[#64748B]">
+                <span>New patient? </span>
+                <Link
+                  href="/register"
+                  className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] hover:underline"
+                >
+                  Register for Patient Portal
+                </Link>
               </div>
             </form>
           </div>

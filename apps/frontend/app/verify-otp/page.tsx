@@ -96,12 +96,19 @@ export default function VerifyOtpPage() {
               </Button>
             </div>
 
-            <div className="pt-2 text-center">
+            <div className="pt-3 text-center text-xs text-slate-600 flex items-center justify-center gap-4">
               <Link
                 href="/login"
                 className="inline-flex items-center text-xs font-medium text-slate-600 hover:text-slate-900"
               >
                 <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Back to Sign In
+              </Link>
+              <span>•</span>
+              <Link
+                href="/register"
+                className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                Register
               </Link>
             </div>
           </form>

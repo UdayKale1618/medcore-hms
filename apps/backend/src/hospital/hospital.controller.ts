@@ -18,6 +18,7 @@ import type { AuthUser } from '../auth/auth-user.interface';
 import { HospitalService } from './hospital.service';
 import { CreateHospitalDto } from './dto/create-hospital.dto';
 import { UpdateHospitalDto } from './dto/update-hospital.dto';
+import { CreateStaffDto } from './dto/create-staff.dto';
 
 @Controller('hospitals')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -182,6 +183,45 @@ export class HospitalController {
       success: true,
       message: 'Hospital departments retrieved successfully',
       data: departments,
+    };
+  }
+
+  // =========================================================
+  // PROVISION HOSPITAL STAFF (PRD: Staff Onboarding by Admin)
+  // =========================================================
+  @Post(':id/staff')
+  @Roles('HOSPITAL_ADMIN', 'SUPER_ADMIN')
+  async createStaff(
+    @Param('id') id: string,
+    @Req() request: Request,
+    @Body() dto: CreateStaffDto,
+  ) {
+    const caller = request.user as AuthUser;
+    const staff = await this.hospitalService.createStaff(id, dto, caller);
+
+    return {
+      success: true,
+      message: 'Staff member provisioned successfully',
+      data: staff,
+    };
+  }
+
+  // =========================================================
+  // GET HOSPITAL STAFF (PRD: List Staff Scoped to Tenant)
+  // =========================================================
+  @Get(':id/staff')
+  @Roles('HOSPITAL_ADMIN', 'SUPER_ADMIN')
+  async getHospitalStaff(
+    @Param('id') id: string,
+    @Req() request: Request,
+  ) {
+    const caller = request.user as AuthUser;
+    const staff = await this.hospitalService.getHospitalStaff(id, caller);
+
+    return {
+      success: true,
+      message: 'Hospital staff retrieved successfully',
+      data: staff,
     };
   }
 }

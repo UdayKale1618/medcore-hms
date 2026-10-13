@@ -20,7 +20,7 @@ export class RegisterDto {
   @IsString()
   hospitalId: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  roleId: string;
+  roleId?: string;
 }

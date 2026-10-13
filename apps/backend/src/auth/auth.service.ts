@@ -2,6 +2,8 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -22,7 +24,30 @@ export class AuthService {
   ) {}
 
   // =========================================================
-  // REGISTER
+  // PUBLIC HOSPITALS (For Registration Selection)
+  // =========================================================
+  async getPublicHospitals() {
+    return this.prisma.hospital.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        addresses: {
+          select: {
+            city: true,
+            state: true,
+          },
+        },
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+  }
+
+  // =========================================================
+  // REGISTER (Public Self-Registration: Strictly Patients)
   // =========================================================
 
   async register(registerDto: RegisterDto) {
@@ -51,12 +76,31 @@ export class AuthService {
       throw new UnauthorizedException('Invalid hospital');
     }
 
-    const role = await this.prisma.role.findUnique({
-      where: { id: roleId },
-    });
+    // Role resolution and privilege escalation protection:
+    // Public registration MUST strictly assign PATIENT. Privileged staff roles must be provisioned by admins.
+    let role;
+    if (roleId) {
+      role = await this.prisma.role.findUnique({
+        where: { id: roleId },
+      });
 
-    if (!role) {
-      throw new UnauthorizedException('Invalid role');
+      if (!role) {
+        throw new UnauthorizedException('Invalid role');
+      }
+
+      if (role.name !== 'PATIENT') {
+        throw new ForbiddenException(
+          'Public registration is only permitted for patients. Staff accounts must be provisioned by hospital administrators.',
+        );
+      }
+    } else {
+      role = await this.prisma.role.findUnique({
+        where: { name: 'PATIENT' },
+      });
+
+      if (!role) {
+        throw new NotFoundException('Patient role not found in system');
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -68,7 +112,7 @@ export class AuthService {
         phone,
         passwordHash: hashedPassword,
         hospitalId,
-        roleId,
+        roleId: role.id,
       },
       include: {
         role: true,
@@ -76,8 +120,31 @@ export class AuthService {
       },
     });
 
+    // Automatically create Patient entity for the new patient user
+    if (role.name === 'PATIENT') {
+      await this.prisma.patient.create({
+        data: {
+          userId: user.id,
+          hospitalId: user.hospitalId,
+        },
+      });
+    }
+
+    // Generate initial 6-digit email verification OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await this.prisma.emailVerificationOtp.create({
+      data: {
+        userId: user.id,
+        otp,
+        expiresAt,
+      },
+    });
+
     return {
-      message: 'Registration successful',
+      message: 'Registration successful. Please verify your email with the 6-digit OTP code.',
+      otp, // included for development / evaluation
       user: {
         id: user.id,
         name: user.name,

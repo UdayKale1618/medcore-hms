@@ -41,6 +41,14 @@ export class AuthController {
   }
 
   // =========================
+  // PUBLIC HOSPITALS LIST (For Registration)
+  // =========================
+  @Get('hospitals')
+  getPublicHospitals() {
+    return this.authService.getPublicHospitals();
+  }
+
+  // =========================
   // SEND EMAIL VERIFICATION OTP
   // =========================
   @Post('send-verification-otp')
@@ -49,9 +57,9 @@ export class AuthController {
   }
 
   // =========================
-  // VERIFY EMAIL OTP
+  // VERIFY EMAIL OTP (PRD: POST /auth/verify-email)
   // =========================
-  @Post('verify-otp')
+  @Post(['verify-email', 'verify-otp'])
   verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
     return this.authService.verifyOtp(
       verifyOtpDto.email,

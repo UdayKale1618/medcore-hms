@@ -13,6 +13,8 @@ describe('HospitalController', () => {
     updateHospital: jest.Mock;
     getAllHospitals: jest.Mock;
     createHospital: jest.Mock;
+    createStaff: jest.Mock;
+    getHospitalStaff: jest.Mock;
   };
 
   const mockHospital = {
@@ -28,6 +30,8 @@ describe('HospitalController', () => {
       updateHospital: jest.fn(),
       getAllHospitals: jest.fn(),
       createHospital: jest.fn(),
+      createStaff: jest.fn(),
+      getHospitalStaff: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -255,6 +259,70 @@ describe('HospitalController', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockHospital);
+    });
+  });
+
+  describe('createStaff (POST /hospitals/:id/staff)', () => {
+    it('should provision a staff member', async () => {
+      const mockStaff = {
+        id: 'usr-100',
+        name: 'Nurse Joy',
+        email: 'nurse.joy@apollo.com',
+        role: 'NURSE',
+        hospitalId: 'hosp-1',
+      };
+      service.createStaff.mockResolvedValue(mockStaff);
+
+      const req = {
+        user: {
+          userId: 'user-admin',
+          role: 'HOSPITAL_ADMIN',
+          hospitalId: 'hosp-1',
+        },
+      } as unknown as Request;
+
+      const result = await controller.createStaff('hosp-1', req, {
+        name: 'Nurse Joy',
+        email: 'nurse.joy@apollo.com',
+        password: 'Password123!',
+        role: 'NURSE',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockStaff);
+      expect(service.createStaff).toHaveBeenCalledWith(
+        'hosp-1',
+        {
+          name: 'Nurse Joy',
+          email: 'nurse.joy@apollo.com',
+          password: 'Password123!',
+          role: 'NURSE',
+        },
+        req.user,
+      );
+    });
+  });
+
+  describe('getHospitalStaff (GET /hospitals/:id/staff)', () => {
+    it('should retrieve hospital staff', async () => {
+      const mockStaffList = [
+        { id: 'usr-1', name: 'Dr. Smith', role: { name: 'DOCTOR' } },
+      ];
+      service.getHospitalStaff.mockResolvedValue(mockStaffList);
+
+      const req = {
+        user: {
+          userId: 'user-admin',
+          role: 'HOSPITAL_ADMIN',
+          hospitalId: 'hosp-1',
+        },
+      } as unknown as Request;
+
+      const result = await controller.getHospitalStaff('hosp-1', req);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockStaffList);
+      expect(service.getHospitalStaff).toHaveBeenCalledWith('hosp-1', req.user);
     });
   });
 });
