@@ -9,15 +9,17 @@ async function bootstrap() {
 
   const isProduction = process.env.NODE_ENV === 'production';
   const configuredOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(',').map((o) => o.trim()).filter(Boolean)
+    ? process.env.FRONTEND_URL.split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean)
     : [];
 
-  const allowedOrigins =
-    configuredOrigins.length > 0
-      ? isProduction
-        ? configuredOrigins
-        : [...configuredOrigins, 'http://localhost:3000', 'http://127.0.0.1:3000']
-      : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+  const defaultOrigins = [
+    'https://medcore-hms-coral.vercel.app',
+    'https://medcore-hms.vercel.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ];
+
+  const allowedOrigins = Array.from(new Set([...configuredOrigins, ...defaultOrigins]));
 
   app.enableCors({
     origin: (
@@ -28,7 +30,12 @@ async function bootstrap() {
       if (!origin) {
         return callback(null, true);
       }
-      if (allowedOrigins.includes(origin)) {
+      const normalizedOrigin = origin.replace(/\/$/, '');
+      const isAllowed =
+        allowedOrigins.includes(normalizedOrigin) ||
+        normalizedOrigin.endsWith('.vercel.app');
+
+      if (isAllowed) {
         return callback(null, true);
       }
       return callback(new Error(`Origin ${origin} not allowed by CORS`), false);

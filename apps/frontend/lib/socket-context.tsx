@@ -29,7 +29,10 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+  process.env.NEXT_PUBLIC_SOCKET_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? 'https://medcore-hms-tvww.onrender.com'
+    : 'http://localhost:5000');
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const { user, token } = useAuth();
