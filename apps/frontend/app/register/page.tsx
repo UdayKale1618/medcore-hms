@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -13,6 +13,7 @@ import {
   ArrowRight,
   ShieldCheck,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,25 +34,45 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
+  const [hospitalsLoading, setHospitalsLoading] = useState(true);
+  const [hospitalsError, setHospitalsError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
 
   // Load public hospital options for the dropdown
-  useEffect(() => {
-    async function loadHospitals() {
-      try {
-        const data = await api.get<HospitalOption[]>('/auth/hospitals', { skipAuth: true });
-        if (Array.isArray(data) && data.length > 0) {
-          setHospitals(data);
-          setHospitalId(data[0].id);
-        }
-      } catch {
-        // Fallback default if hospitals endpoint is unreachable
+  const loadHospitals = useCallback(async () => {
+    setHospitalsLoading(true);
+    setHospitalsError(null);
+    try {
+      const data = await api.get<HospitalOption[]>('/auth/hospitals', { skipAuth: true });
+      if (Array.isArray(data) && data.length > 0) {
+        setHospitals(data);
+        setHospitalId(data[0].id);
+      } else {
+        setHospitals([]);
+        setHospitalId('');
       }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unable to load hospitals.';
+      setHospitalsError(msg);
+      setHospitals([]);
+      setHospitalId('');
+    } finally {
+      setHospitalsLoading(false);
     }
-    loadHospitals();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!cancelled) {
+        await loadHospitals();
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,30 +202,78 @@ export default function RegisterPage() {
             {/* Hospital Branch Selector */}
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-slate-700">
-                Primary Hospital Branch
+                Primary Hospital Branch <span className="text-rose-500">*</span>
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Building2 className="w-4 h-4" />
+
+              {/* Error State: API failure with retry */}
+              {hospitalsError ? (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+                  <div className="flex-1">
+                    <p className="font-medium">Unable to load hospitals</p>
+                    <p className="mt-0.5 text-rose-600">{hospitalsError}</p>
+                    <button
+                      type="button"
+                      onClick={loadHospitals}
+                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Retry
+                    </button>
+                  </div>
                 </div>
-                <select
-                  value={hospitalId}
-                  onChange={(e) => setHospitalId(e.target.value)}
-                  disabled={isLoading || hospitals.length === 0}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                >
-                  {hospitals.length === 0 ? (
-                    <option value="">Loading hospitals...</option>
-                  ) : (
-                    hospitals.map((h) => (
+              ) : hospitalsLoading ? (
+                /* Loading State */
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <select
+                    disabled
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-500 cursor-wait"
+                  >
+                    <option value="">Loading hospitals…</option>
+                  </select>
+                </div>
+              ) : hospitals.length === 0 ? (
+                /* Empty State: no hospitals available */
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 flex items-start gap-2">
+                  <Building2 className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+                  <div className="flex-1">
+                    <p className="font-medium">No hospitals available</p>
+                    <p className="mt-0.5">There are currently no hospital branches available for patient registration. Please contact the hospital administration or try again later.</p>
+                    <button
+                      type="button"
+                      onClick={loadHospitals}
+                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Success State: hospital options loaded */
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <select
+                    value={hospitalId}
+                    onChange={(e) => setHospitalId(e.target.value)}
+                    disabled={isLoading}
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  >
+                    {hospitals.map((h) => (
                       <option key={h.id} value={h.id}>
                         {h.name}
                         {h.addresses?.[0]?.city ? ` (${h.addresses[0].city})` : ''}
                       </option>
-                    ))
-                  )}
-                </select>
-              </div>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <p className="text-[11px] text-slate-500">
                 Select the hospital where you receive clinical consultations and care.
               </p>
@@ -249,6 +318,7 @@ export default function RegisterPage() {
                 variant="primary"
                 size="md"
                 isLoading={isLoading}
+                disabled={isLoading || !hospitalId}
                 className="w-full justify-center shadow-xs"
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
