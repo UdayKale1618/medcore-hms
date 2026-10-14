@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm --prefix apps/backend run build",
+    "start": "npm --prefix apps/backend run start:migrate:prod",
+    "test": "npm --prefix apps/backend run test",
+    "test:e2e": "npm --prefix apps/backend run test:e2e"
   },
   "repository": {
     "type": "git",

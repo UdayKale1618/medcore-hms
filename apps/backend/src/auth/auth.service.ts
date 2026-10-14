@@ -1,5 +1,6 @@
 import {
   Injectable,
+  OnModuleInit,
   UnauthorizedException,
   ConflictException,
   ForbiddenException,
@@ -16,18 +17,85 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
   ) {}
 
+  async onModuleInit() {
+    await this.ensureInitialSeed();
+  }
+
+  async ensureInitialSeed() {
+    try {
+      const roles = [
+        { name: 'SUPER_ADMIN', description: 'System administrator with cross-hospital access' },
+        { name: 'HOSPITAL_ADMIN', description: 'Hospital executive & administrative operations' },
+        { name: 'DOCTOR', description: 'Doctor managing clinical consultations & medical records' },
+        { name: 'NURSE', description: 'Nurse managing inpatient care, vitals & ward rounds' },
+        { name: 'RECEPTIONIST', description: 'Receptionist managing patient registration & front desk' },
+        { name: 'LAB_TECHNICIAN', description: 'Laboratory technician processing diagnostics & reports' },
+        { name: 'PHARMACIST', description: 'Pharmacist managing pharmacy inventory & dispensing' },
+        { name: 'ACCOUNTANT', description: 'Financial accountant managing billing, invoices & payments' },
+        { name: 'PATIENT', description: 'Hospital patient with patient portal access' },
+      ];
+
+      for (const r of roles) {
+        await this.prisma.role.upsert({
+          where: { name: r.name },
+          update: {},
+          create: r,
+        });
+      }
+
+      const hospitalCount = await this.prisma.hospital.count();
+      if (hospitalCount === 0) {
+        await this.prisma.hospital.create({
+          data: {
+            name: 'MedCore Central Hospital',
+            email: 'admin@medcore.com',
+            phone: '+91 9876543210',
+            addresses: {
+              create: {
+                addressLine1: '100 Healthcare Blvd',
+                city: 'Bengaluru',
+                state: 'Karnataka',
+                postalCode: '560001',
+                country: 'India',
+              },
+            },
+          },
+        });
+
+        await this.prisma.hospital.create({
+          data: {
+            name: 'Apollo Specialty Hospital',
+            email: 'admin@apollo.com',
+            phone: '+91 80 2630 4050',
+            addresses: {
+              create: {
+                addressLine1: '154/11 Bannerghatta Road',
+                city: 'Bengaluru',
+                state: 'Karnataka',
+                postalCode: '560076',
+                country: 'India',
+              },
+            },
+          },
+        });
+      }
+    } catch {
+      // Non-fatal if DB is initializing or in mock mode during unit tests
+    }
+  }
+
   // =========================================================
   // PUBLIC HOSPITALS (For Registration Selection)
   // =========================================================
   async getPublicHospitals() {
-    return this.prisma.hospital.findMany({
+    let hospitals = await this.prisma.hospital.findMany({
       select: {
         id: true,
         name: true,
@@ -44,6 +112,29 @@ export class AuthService {
         name: 'asc',
       },
     });
+
+    if (hospitals.length === 0) {
+      await this.ensureInitialSeed();
+      hospitals = await this.prisma.hospital.findMany({
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          addresses: {
+            select: {
+              city: true,
+              state: true,
+            },
+          },
+        },
+        orderBy: {
+          name: 'asc',
+        },
+      });
+    }
+
+    return hospitals;
   }
 
   // =========================================================
