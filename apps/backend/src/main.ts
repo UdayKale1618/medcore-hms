@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
@@ -63,6 +63,30 @@ async function bootstrap() {
 
   const port = process.env.PORT || 5000;
   await app.listen(port, '0.0.0.0');
+
+  const commitSha = process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || 'local';
+  Logger.log(`MedCore HMS Backend listening on 0.0.0.0:${port} [Commit: ${commitSha}]`, 'Bootstrap');
+
+  // Safe startup route diagnostics for production verification in Render logs
+  try {
+    const expressApp = app.getHttpAdapter().getInstance();
+    const router = expressApp?._router || expressApp?.router;
+    if (router?.stack) {
+      const verifiedRoutes: string[] = [];
+      router.stack.forEach((layer: any) => {
+        if (layer.route?.path) {
+          const path = String(layer.route.path);
+          if (path.includes('hospital') || path.includes('health') || path.includes('auth')) {
+            const methods = Object.keys(layer.route.methods || {}).join(',').toUpperCase();
+            verifiedRoutes.push(`${methods} ${path}`);
+          }
+        }
+      });
+      Logger.log(`Active auth/hospital routes: ${verifiedRoutes.join(' | ')}`, 'RouteDiagnostics');
+    }
+  } catch {
+    // Non-fatal diagnostic logging
+  }
 }
 
 bootstrap();

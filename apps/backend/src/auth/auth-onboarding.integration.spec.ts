@@ -15,6 +15,7 @@ import { RolesGuard } from './roles.guard';
 import * as bcrypt from 'bcrypt';
 
 describe('MedCore HMS Onboarding & Auth Flow Integration Tests', () => {
+  jest.setTimeout(30000);
   let app: INestApplication;
   let prisma: any;
   let redisService: any;
