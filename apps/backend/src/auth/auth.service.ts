@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   OnModuleInit,
   UnauthorizedException,
   ConflictException,
@@ -140,27 +141,8 @@ export class AuthService implements OnModuleInit {
   // PUBLIC HOSPITALS (For Registration Selection)
   // =========================================================
   async getPublicHospitals() {
-    let hospitals = await this.prisma.hospital.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        addresses: {
-          select: {
-            city: true,
-            state: true,
-          },
-        },
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-
-    if (hospitals.length === 0) {
-      await this.ensureInitialSeed();
-      hospitals = await this.prisma.hospital.findMany({
+    try {
+      let hospitals = await this.prisma.hospital.findMany({
         select: {
           id: true,
           name: true,
@@ -177,9 +159,36 @@ export class AuthService implements OnModuleInit {
           name: 'asc',
         },
       });
-    }
 
-    return hospitals;
+      if (hospitals.length === 0) {
+        await this.ensureInitialSeed();
+        hospitals = await this.prisma.hospital.findMany({
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            addresses: {
+              select: {
+                city: true,
+                state: true,
+              },
+            },
+          },
+          orderBy: {
+            name: 'asc',
+          },
+        });
+      }
+
+      return hospitals;
+    } catch (error) {
+      Logger.error(
+        `Failed to retrieve public hospitals: ${error instanceof Error ? error.message : error}`,
+        'AuthService',
+      );
+      return [];
+    }
   }
 
   // =========================================================

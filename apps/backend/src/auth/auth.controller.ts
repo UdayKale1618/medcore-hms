@@ -20,7 +20,7 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import type { AuthUser } from './auth-user.interface';
 
-@Controller('auth')
+@Controller(['auth', 'api/auth'])
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
@@ -43,7 +43,7 @@ export class AuthController {
   // =========================
   // PUBLIC HOSPITALS LIST (For Registration)
   // =========================
-  @Get('hospitals')
+  @Get(['hospitals', 'public-hospitals'])
   getPublicHospitals() {
     return this.authService.getPublicHospitals();
   }

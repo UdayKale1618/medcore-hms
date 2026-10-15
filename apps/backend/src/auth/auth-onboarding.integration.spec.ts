@@ -507,7 +507,7 @@ describe('MedCore HMS Onboarding & Auth Flow Integration Tests', () => {
   });
 
   describe('5. Public Hospital Discovery for Registration', () => {
-    it('provides public list of active hospitals for registration dropdown', async () => {
+    it('provides public list of active hospitals for registration dropdown via /auth/hospitals without auth', async () => {
       const res = await request(app.getHttpServer())
         .get('/auth/hospitals')
         .expect(200);
@@ -516,6 +516,26 @@ describe('MedCore HMS Onboarding & Auth Flow Integration Tests', () => {
       expect(res.body.length).toBeGreaterThanOrEqual(1);
       expect(res.body[0]).toHaveProperty('id');
       expect(res.body[0]).toHaveProperty('name');
+      expect(res.body[0]).toHaveProperty('email');
+    });
+
+    it('supports /api/auth/hospitals prefix cleanly for proxy compatibility', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/auth/hospitals')
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThanOrEqual(1);
+      expect(res.body[0]).toHaveProperty('id');
+    });
+
+    it('supports /auth/public-hospitals alias cleanly', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/auth/public-hospitals')
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

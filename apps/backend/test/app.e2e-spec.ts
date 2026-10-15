@@ -29,6 +29,22 @@ describe('AppController (e2e)', () => {
       .expect(200);
   });
 
+  it('/auth/hospitals (GET) - returns public hospitals without authentication', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/auth/hospitals')
+      .expect(200);
+
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('/api/auth/hospitals (GET) - supports proxy prefix compatibility', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/auth/hospitals')
+      .expect(200);
+
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
   afterAll(async () => {
     if (app) {
       await app.close();

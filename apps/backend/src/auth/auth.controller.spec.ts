@@ -25,6 +25,7 @@ describe('AuthController', () => {
       login: jest.fn(),
       refresh: jest.fn(),
       logout: jest.fn(),
+      getPublicHospitals: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -51,6 +52,36 @@ describe('AuthController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('GET /auth/hospitals (Public Hospital Discovery)', () => {
+    it('delegates to authService.getPublicHospitals and returns active hospitals with address', async () => {
+      const mockHospitals = [
+        {
+          id: 'hosp-1',
+          name: 'MedCore Central Hospital',
+          email: 'demo@medcore.com',
+          phone: '+91 9876543210',
+          addresses: [{ city: 'Bengaluru', state: 'Karnataka' }],
+        },
+        {
+          id: 'hosp-2',
+          name: 'Apollo Specialty Hospital',
+          email: 'admin@apollo.com',
+          phone: '+91 80 2630 4050',
+          addresses: [{ city: 'Bengaluru', state: 'Karnataka' }],
+        },
+      ];
+
+      authService.getPublicHospitals.mockResolvedValue(mockHospitals);
+
+      const result = await controller.getPublicHospitals();
+
+      expect(authService.getPublicHospitals).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockHospitals);
+      expect(result[0]).toHaveProperty('id', 'hosp-1');
+      expect(result[0].addresses[0]).toHaveProperty('city', 'Bengaluru');
+    });
   });
 
   describe('Cookie Configuration & Lifecycle', () => {
