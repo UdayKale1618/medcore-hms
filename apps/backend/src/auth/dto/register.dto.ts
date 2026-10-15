@@ -16,9 +16,9 @@ export class RegisterDto {
   @MinLength(8)
   password: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  hospitalId: string;
+  hospitalId?: string;
 
   @IsOptional()
   @IsString()

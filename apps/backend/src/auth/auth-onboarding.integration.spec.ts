@@ -76,6 +76,7 @@ describe('MedCore HMS Onboarding & Auth Flow Integration Tests', () => {
           if (where.id === mockHospitalB.id) return mockHospitalB;
           return null;
         }),
+        findFirst: jest.fn().mockImplementation(async () => mockHospitalA),
         findMany: jest.fn().mockResolvedValue([mockHospitalA, mockHospitalB]),
       },
       role: {
@@ -261,6 +262,28 @@ describe('MedCore HMS Onboarding & Auth Flow Integration Tests', () => {
       const otp = otpsStore.find((o) => o.userId === res.body.user.id);
       expect(otp).toBeDefined();
       expect(otp.otp).toMatch(/^\d{6}$/);
+    });
+
+    it('successfully registers patient without hospitalId and automatically resolves primary hospital', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          name: 'Portal Patient',
+          email: 'portal.patient@example.com',
+          phone: '+91 9876543211',
+          password: 'Password123!',
+        })
+        .expect(201);
+
+      expect(res.body.message).toContain('Registration successful');
+      expect(res.body.user).toBeDefined();
+      expect(res.body.user.email).toBe('portal.patient@example.com');
+      expect(res.body.user.role).toBe('PATIENT');
+
+      // Verify Patient record created with primary hospital
+      const patient = patientsStore.find((p) => p.userId === res.body.user.id);
+      expect(patient).toBeDefined();
+      expect(patient.hospitalId).toBe(mockHospitalA.id);
     });
 
     it('rejects duplicate email with 409 Conflict', async () => {

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   OnModuleInit,
@@ -213,12 +214,35 @@ export class AuthService implements OnModuleInit {
       throw new ConflictException('Email already registered');
     }
 
-    const hospital = await this.prisma.hospital.findUnique({
-      where: { id: hospitalId },
-    });
+    let targetHospitalId = hospitalId;
 
-    if (!hospital) {
-      throw new UnauthorizedException('Invalid hospital');
+    if (targetHospitalId) {
+      const hospital = await this.prisma.hospital.findUnique({
+        where: { id: targetHospitalId },
+      });
+
+      if (!hospital) {
+        throw new UnauthorizedException('Invalid hospital');
+      }
+    } else {
+      // Dynamic primary hospital resolution for public patient self-registration:
+      // Preserves strict tenant isolation without hardcoding any specific ID.
+      let primaryHospital = await this.prisma.hospital.findFirst({
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (!primaryHospital) {
+        await this.ensureInitialSeed();
+        primaryHospital = await this.prisma.hospital.findFirst({
+          orderBy: { createdAt: 'asc' },
+        });
+      }
+
+      if (!primaryHospital) {
+        throw new BadRequestException('No hospital facility is currently available for patient registration');
+      }
+
+      targetHospitalId = primaryHospital.id;
     }
 
     // Role resolution and privilege escalation protection:
@@ -256,7 +280,7 @@ export class AuthService implements OnModuleInit {
         email,
         phone,
         passwordHash: hashedPassword,
-        hospitalId,
+        hospitalId: targetHospitalId,
         roleId: role.id,
       },
       include: {
