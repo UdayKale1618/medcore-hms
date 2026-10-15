@@ -50,41 +50,86 @@ export class AuthService implements OnModuleInit {
         });
       }
 
-      const hospitalCount = await this.prisma.hospital.count();
-      if (hospitalCount === 0) {
-        await this.prisma.hospital.create({
-          data: {
-            name: 'MedCore Central Hospital',
-            email: 'admin@medcore.com',
-            phone: '+91 9876543210',
-            addresses: {
-              create: {
-                addressLine1: '100 Healthcare Blvd',
-                city: 'Bengaluru',
-                state: 'Karnataka',
-                postalCode: '560001',
-                country: 'India',
-              },
-            },
+      const demoHospitals = [
+        {
+          name: 'MedCore Central Hospital',
+          email: 'demo@medcore.com',
+          phone: '+91 9876543210',
+          address: {
+            addressLine1: '100 Healthcare Blvd, Whitefield',
+            city: 'Bengaluru',
+            state: 'Karnataka',
+            postalCode: '560066',
+            country: 'India',
+          },
+        },
+        {
+          name: 'Apollo Specialty Hospital',
+          email: 'admin@apollo.com',
+          phone: '+91 80 2630 4050',
+          address: {
+            addressLine1: '154/11 Bannerghatta Road, Opp. IIMB',
+            city: 'Bengaluru',
+            state: 'Karnataka',
+            postalCode: '560076',
+            country: 'India',
+          },
+        },
+        {
+          name: 'City Care Hospital',
+          email: 'info@citycarehospital.com',
+          phone: '+91 22 2410 7000',
+          address: {
+            addressLine1: '42 Dr. Ambedkar Road, Parel',
+            city: 'Mumbai',
+            state: 'Maharashtra',
+            postalCode: '400012',
+            country: 'India',
+          },
+        },
+      ];
+
+      for (const h of demoHospitals) {
+        const hospital = await this.prisma.hospital.upsert({
+          where: { email: h.email },
+          update: {
+            name: h.name,
+            phone: h.phone,
+          },
+          create: {
+            name: h.name,
+            email: h.email,
+            phone: h.phone,
           },
         });
 
-        await this.prisma.hospital.create({
-          data: {
-            name: 'Apollo Specialty Hospital',
-            email: 'admin@apollo.com',
-            phone: '+91 80 2630 4050',
-            addresses: {
-              create: {
-                addressLine1: '154/11 Bannerghatta Road',
-                city: 'Bengaluru',
-                state: 'Karnataka',
-                postalCode: '560076',
-                country: 'India',
-              },
-            },
-          },
+        const existingAddr = await this.prisma.address.findFirst({
+          where: { hospitalId: hospital.id },
         });
+
+        if (existingAddr) {
+          await this.prisma.address.update({
+            where: { id: existingAddr.id },
+            data: {
+              addressLine1: h.address.addressLine1,
+              city: h.address.city,
+              state: h.address.state,
+              postalCode: h.address.postalCode,
+              country: h.address.country,
+            },
+          });
+        } else {
+          await this.prisma.address.create({
+            data: {
+              hospitalId: hospital.id,
+              addressLine1: h.address.addressLine1,
+              city: h.address.city,
+              state: h.address.state,
+              postalCode: h.address.postalCode,
+              country: h.address.country,
+            },
+          });
+        }
       }
     } catch {
       // Non-fatal if DB is initializing or in mock mode during unit tests

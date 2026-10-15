@@ -16,6 +16,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "start:migrate:prod": "prisma migrate deploy && node dist/main",
+    "seed": "ts-node prisma/seed.ts",
     "lint": "oxlint src/ test/",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -70,5 +71,8 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.2"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }

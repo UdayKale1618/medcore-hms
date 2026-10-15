@@ -68,7 +68,66 @@ async function main() {
       phone: '+91 9876543210',
     },
   });
-  console.log(`✅ Hospitals seeded: ${apolloHospital.name}, ${demoHospital.name}`);
+
+  const cityCareHospital = await prisma.hospital.upsert({
+    where: { email: 'info@citycarehospital.com' },
+    update: {
+      name: 'City Care Hospital',
+      phone: '+91 22 2410 7000',
+    },
+    create: {
+      name: 'City Care Hospital',
+      email: 'info@citycarehospital.com',
+      phone: '+91 22 2410 7000',
+    },
+  });
+
+  console.log(`✅ Hospitals seeded: ${apolloHospital.name}, ${demoHospital.name}, ${cityCareHospital.name}`);
+
+  // Hospital Addresses
+  const hospitalAddresses = [
+    {
+      hospitalId: demoHospital.id,
+      addressLine1: '100 Healthcare Blvd, Whitefield',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      postalCode: '560066',
+      country: 'India',
+    },
+    {
+      hospitalId: apolloHospital.id,
+      addressLine1: '154/11 Bannerghatta Road, Opp. IIMB',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      postalCode: '560076',
+      country: 'India',
+    },
+    {
+      hospitalId: cityCareHospital.id,
+      addressLine1: '42 Dr. Ambedkar Road, Parel',
+      city: 'Mumbai',
+      state: 'Maharashtra',
+      postalCode: '400012',
+      country: 'India',
+    },
+  ];
+
+  for (const addr of hospitalAddresses) {
+    const existing = await prisma.address.findFirst({
+      where: { hospitalId: addr.hospitalId },
+    });
+    if (existing) {
+      await prisma.address.update({
+        where: { id: existing.id },
+        data: addr,
+      });
+    } else {
+      await prisma.address.create({
+        data: addr,
+      });
+    }
+  }
+  console.log('✅ Hospital addresses seeded');
 
   // =========================
   // 3. DEPARTMENTS
